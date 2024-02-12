@@ -1,0 +1,26 @@
+[
+    {
+        "id": 0,
+        "name": "Base",
+        "upgradeMessage": "",
+        "levelRequirement": 0,
+        "upgrades": [],
+        "flags": {
+            "invisibility": false,
+            "zoomAbility": false,
+            "canClaimSquares": false,
+            "devOnly": false
+        },
+        "visibilityRateShooting": 0.23,
+        "visibilityRateMoving": 0.08,
+        "invisibilityRate": 0.03,
+        "fieldFactor": 1,
+        "absorbtionFactor": 1,
+        "speed": 1,
+        "maxHealth": 50,
+        "preAddon": null,
+        "postAddon": null,
+        "sides": 1,
+        "borderWidth": 15
+    }
+]
