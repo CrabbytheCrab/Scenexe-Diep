@@ -76,6 +76,7 @@ export default class TankBody extends LivingEntity implements BarrelBase {
     public reloadTime = 15;
     /** The current tank definition / tank id. */
     private _currentTank: Tank | DevTank = Tank.Node;
+    private _currentBody: Body.Base;
     /** Sets tanks to be invulnerable - example, godmode, or AC */
     public isInvulnerable: boolean = false;
 
@@ -102,6 +103,8 @@ export default class TankBody extends LivingEntity implements BarrelBase {
 
         this.damagePerTick = 20;
         this.setTank(Tank.Node);
+        this.setBody(Body.Base);
+
     }
 
     /** The active change in size from the base size to the current. Contributes to barrel and addon sizes. */
@@ -175,6 +178,56 @@ export default class TankBody extends LivingEntity implements BarrelBase {
         this.cameraEntity.cameraData.tankOverride = tank.name;
         camera.setFieldFactor(tank.fieldFactor);
     }
+        /** This method allows for changing the current tank. */
+        public setBody(id: Body) {
+            // Delete old barrels and addons
+            for (let i = 0; i < this.children.length; ++i) {
+                this.children[i].isChild = false;
+                this.children[i].delete();
+            }
+            this.children = [];
+            this.addons = [];
+            // Get the new tank data
+            const body = getBodyById(id);
+            const camera = this.cameraEntity;
+    
+            if (!body) throw new TypeError("Invalid tank ID");
+            this.definition = body;
+            if (!Entity.exists(camera)) throw new Error("No camera");
+    
+            this.physicsData.sides = body.sides;
+            this.styleData.opacity = 1;
+    
+            // Size ratios
+            this.baseSize = body.baseSizeOverride ?? body.sides === 4 ? Math.SQRT2 * 32.5 : body.sides === 16 ? Math.SQRT2 * 25 : 50;
+            this.physicsData.absorbtionFactor = this.isInvulnerable ? 0 : body.absorbtionFactor;
+            if (body.absorbtionFactor === 0) this.positionData.flags |= PositionFlags.canMoveThroughWalls;
+            else if (this.positionData.flags & PositionFlags.canMoveThroughWalls) this.positionData.flags ^= PositionFlags.canMoveThroughWalls;
+    
+            camera.cameraData.tank = this._currentBody = id;
+            if (body.upgradeMessage && camera instanceof ClientCamera) camera.client.notify(body.upgradeMessage);
+    
+            // Build addons, then tanks, then addons.
+            const preAddon = body.preAddon;
+            if (preAddon) {
+                const AddonConstructor = AddonById[preAddon];
+                if (AddonConstructor) this.addons.push(new AddonConstructor(this));
+            }
+    
+            for (const barrel of body.barrels) {
+                this.barrels.push(new Barrel(this, barrel));
+            }
+    
+            const postAddon = body.postAddon;
+            if (postAddon) {
+                const AddonConstructor = AddonById[postAddon];
+                if (AddonConstructor) this.addons.push(new AddonConstructor(this));
+            }
+    
+            // Yeah, yeah why not
+            this.cameraEntity.cameraData.tankOverride = body.name;
+            camera.setFieldFactor(body.fieldFactor);
+        }
     /** See LivingEntity.onKill */
     public onKill(entity: LivingEntity) {
         if (Entity.exists(this.cameraEntity.cameraData.values.player)) this.scoreData.score = this.cameraEntity.cameraData.score += entity.scoreReward;

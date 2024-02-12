@@ -69,6 +69,10 @@ export interface BodyDefinition {
     fieldFactor: number;
     /** The speed of the tank. */
     speed: number;
+    /** The health multiplier of the tank. */
+    hpmulti: number;
+    /** The body damage multiplier of the tank. */
+    bdmulti: number;
     /** The absorbtionFactor (field) of the tank. */
     absorbtionFactor: number;
     /** The base max health of the tank. */
